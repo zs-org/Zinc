@@ -1,0 +1,12 @@
+fn nested_test() {
+    if (true) {
+        def a: i32 = 1
+        while (false) {
+            def b: i32 = 2
+            if (true) {
+                safe c: i32 = 3
+                free(c)
+            }
+        }
+    }
+}

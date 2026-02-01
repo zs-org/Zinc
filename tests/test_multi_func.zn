@@ -1,0 +1,8 @@
+fn first() {
+    local a: i32 = 10
+}
+
+fn second() {
+    local b: f32 = 20.0
+    local c: i32 = 30
+}

@@ -1,0 +1,21 @@
+fn test_leak() {
+    safe x: i32 = 10
+    // free(x) is missing
+}
+
+fn test_no_leak() {
+    safe y: i32 = 20
+    free(y)
+}
+
+fn test_move_no_leak() {
+    safe a: i32 = 30
+    move a -> b
+    free(b)
+}
+
+fn test_move_leak() {
+    safe c: i32 = 40
+    move c -> d
+    // free(d) is missing
+}

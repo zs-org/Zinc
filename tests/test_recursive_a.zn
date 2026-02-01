@@ -1,0 +1,5 @@
+import test_recursive_b
+fn func_a() {
+    local x: i32 = 1
+    test_recursive_b.func_b()
+}

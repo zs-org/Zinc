@@ -89,9 +89,17 @@ class FZC:
                 i += 1
                 while i < len(tokens) and tokens[i][0] == 'WHITESPACE': i += 1
                 if i < len(tokens):
-                    mod_name = tokens[i][1]
-                    i += 1
-                    alias = mod_name
+                    # Consume full import path
+                    path_parts = []
+                    allowed_chars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_./')
+                    while i < len(tokens) and tokens[i][0] in ('ID', 'DOT', 'OTHER'):
+                        if all(c in allowed_chars for c in tokens[i][1]):
+                            path_parts.append(tokens[i][1])
+                            i += 1
+                        else:
+                            break
+                    mod_name = "".join(path_parts)
+                    alias = mod_name.split('/')[-1].split('.')[-1]
                     while i < len(tokens) and tokens[i][0] == 'WHITESPACE': i += 1
                     if i < len(tokens) and tokens[i][1] == 'as':
                         i += 1
@@ -100,7 +108,7 @@ class FZC:
                             alias = tokens[i][1]
                             i += 1
 
-                    result.append(f'const {alias} = @import("{mod_name.replace(os.sep, "/")}.zig");')
+                    result.append(f'const {alias} = @import("{mod_name.replace(".zn", "").replace(os.sep, "/")}.zig");')
 
                     # Crawl
                     mod_path = os.path.join(os.path.dirname(zn_path), f"{mod_name}.zn")
@@ -154,25 +162,27 @@ class FZC:
 
         needs_try = uses_local or uses_def or uses_safe or uses_raw or uses_fix or any(t[1] == 'try' for t in body_tokens)
 
-        sig_str = "".join(t[1] for t in sig_tokens)
-        if needs_try and '!' not in sig_str:
-            last_rparen_idx = -1
-            for idx, t in enumerate(sig_tokens):
-                if t[0] == 'RPAREN':
-                    last_rparen_idx = idx
+        last_rparen_idx = -1
+        for idx, t in enumerate(sig_tokens):
+            if t[0] == 'RPAREN':
+                last_rparen_idx = idx
 
-            if last_rparen_idx != -1:
-                has_ret = False
-                for t in sig_tokens[last_rparen_idx+1:]:
-                    if t[0] == 'ID' or t[0] == 'OTHER':
-                        has_ret = True
-                        break
+        if last_rparen_idx != -1:
+            has_ret = False
+            for t in sig_tokens[last_rparen_idx+1:]:
+                if t[0] == 'ID' or t[0] == 'OTHER' or t[0] == 'ZIG_ESC':
+                    has_ret = True
+                    break
 
-                if not has_ret:
-                    sig_tokens.append(('WHITESPACE', ' '))
+            if not has_ret:
+                sig_tokens.append(('WHITESPACE', ' '))
+                if needs_try:
                     sig_tokens.append(('OTHER', '!'))
-                    sig_tokens.append(('ID', 'void'))
-                else:
+                sig_tokens.append(('ID', 'void'))
+            elif needs_try:
+                # Ensure it has !
+                sig_str = "".join(t[1] for t in sig_tokens)
+                if '!' not in sig_str:
                     for idx in range(last_rparen_idx + 1, len(sig_tokens)):
                         if sig_tokens[idx][0] in ('ID', 'OTHER'):
                             sig_tokens.insert(idx, ('OTHER', '!'))

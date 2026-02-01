@@ -1,0 +1,4 @@
+import test_recursive_a
+fn func_b() {
+    local y: i32 = 2
+}

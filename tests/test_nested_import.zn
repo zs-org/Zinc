@@ -1,0 +1,2 @@
+import sub/util
+pub fn main() { _ = util.hello() }

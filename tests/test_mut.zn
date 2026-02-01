@@ -1,0 +1,7 @@
+fn test_mut() {
+    def mut x: i32 = 1
+    safe mut y: i32 = 2
+    x.* = 10
+    y.* = 20
+    free(y)
+}

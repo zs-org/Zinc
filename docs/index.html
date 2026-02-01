@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fundamental Zinc - Documentation</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --code-bg: #e8ecef;
+            --sidebar-width: 250px;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        nav {
+            width: var(--sidebar-width);
+            background-color: var(--secondary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+        nav h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        nav ul li {
+            padding: 10px 25px;
+        }
+        nav ul li a {
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: 0.3s;
+            display: block;
+        }
+        nav ul li a:hover {
+            color: white;
+            padding-left: 5px;
+        }
+        main {
+            margin-left: var(--sidebar-width);
+            padding: 40px 60px;
+            max-width: 900px;
+        }
+        h1, h2, h3 {
+            color: var(--secondary-color);
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        code {
+            background-color: var(--code-bg);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+        }
+        pre {
+            background-color: var(--secondary-color);
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            line-height: 1.5;
+        }
+        .keyword { color: #3498db; font-weight: bold; }
+        .comment { color: #7f8c8d; }
+        .string { color: #e67e22; }
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <h2>Fundamental Zinc</h2>
+        <ul>
+            <li><a href="#intro">Introduction</a></li>
+            <li><a href="#basics">The Basics</a></li>
+            <li><a href="#memory">Memory Strategies</a></li>
+            <li><a href="#ownership">Ownership & Moves</a></li>
+            <li><a href="#zig">Zig Integration</a></li>
+            <li><a href="#safety">Safety & Errors</a></li>
+            <li><a href="#fzc">Using FZC</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div id="intro" class="card">
+            <h1>Introduction to Fundamental Zinc</h1>
+            <p>Fundamental Zinc (FZ) is the core, minimal, explicit form of the Zinc language. It is designed for systems programmers who demand total control over memory without the mental overhead of hidden allocations.</p>
+            <p>Zinc's philosophy is <strong>"Explicit is better than implicit."</strong> Every byte of heap memory is accounted for using one of five clear strategies. There is no garbage collector, no hidden control flow, and no magic.</p>
+            <p>FZ serves as the foundational layer for higher-level Zinc constructs, but it is also a powerful tool for writing clean, predictable Zig code.</p>
+        </div>
+
+        <div id="quickstart" class="card">
+            <h2>Quick Start</h2>
+            <p>To start with Zinc, create a file named <code>hello.zn</code>:</p>
+            <pre><span class="keyword">import</span> std
+
+<span class="keyword">pub fn</span> main() {
+    <span class="keyword">local</span> message: []u8 = "Hello, Zinc!".dup()
+    <span class="keyword">zig</span> {
+        @import("std").debug.print("{s}\n", .{message});
+    }
+}</pre>
+            <p>Run the transpiler:</p>
+            <pre>python3 fzc.py hello.zn</pre>
+            <p>This generates <code>hello.zig</code>, which you can then compile with the standard Zig compiler.</p>
+        </div>
+
+        <div id="basics" class="card">
+            <h2>The Basics</h2>
+            <p>Zinc follows a similar syntax to Zig but introduces specific keywords for memory management. Standard Zig keywords like <code>fn</code>, <code>pub</code>, <code>struct</code>, <code>if</code>, <code>while</code>, etc., are passed through directly.</p>
+            <h3>Stack Variables</h3>
+            <p>Use <code>const</code> and <code>var</code> for standard stack-allocated variables.</p>
+            <pre><span class="keyword">const</span> x: i32 = 10
+<span class="keyword">var</span> y: i32 = 20</pre>
+        </div>
+
+        <div id="memory" class="card">
+            <h2>Memory Strategies</h2>
+            <p>Zinc provides five distinct strategies for heap and managed memory:</p>
+
+            <h3>1. local — Function-Scoped Arena</h3>
+            <p>Allocates memory in an arena that is automatically freed when the function returns. Perfect for temporary data used throughout a function.</p>
+            <pre><span class="keyword">fn</span> foo() {
+    <span class="keyword">local</span> a: Foo = Foo()
+    <span class="comment">// 'a' is automatically freed at the end of foo()</span>
+}</pre>
+
+            <h3>2. def — Block-Scoped Heap</h3>
+            <p>Safe heap allocation tied to the current block. It is automatically cleaned up (via <code>defer</code>) when exiting the block.</p>
+            <pre>{
+    <span class="keyword">def</span> x: i32 = 42
+    <span class="comment">// 'x' is freed here</span>
+}</pre>
+
+            <h3>3. safe — Manual Checked Heap</h3>
+            <p>For long-lived objects. You must explicitly call <code>free(x)</code>. FZC will report an error if you forget to free a <code>safe</code> variable.</p>
+            <pre><span class="keyword">safe</span> x: Data = loadData()
+<span class="comment">// ...</span>
+<span class="keyword">free</span>(x)</pre>
+
+            <h3>4. fix — Fixed Buffer Allocation</h3>
+            <p>Uses a fixed buffer on the stack. No heap allocation occurs. Must be used inside a <code>fixblock</code>.</p>
+            <pre><span class="keyword">fixblock</span>(1024) {
+    <span class="keyword">fix</span> buffer: [100]u8 = undefined
+}</pre>
+
+            <h3>5. raw — Unmanaged Heap</h3>
+            <p>Direct heap allocation without automatic cleanup or leak checking. For advanced or performance-critical use cases.</p>
+        </div>
+
+        <div id="ownership" class="card">
+            <h2>Ownership & Moves</h2>
+            <p>Zinc uses move semantics to manage ownership of heap-allocated data (<code>def</code>, <code>safe</code>, <code>raw</code>).</p>
+            <h3>Move</h3>
+            <p>Transfers ownership from one variable to another. The source variable becomes <code>null</code>.</p>
+            <pre><span class="keyword">move</span> x <span class="keyword">-></span> y</pre>
+            <h3>Borrow</h3>
+            <p>Creates a reference without taking ownership.</p>
+            <pre><span class="keyword">borrow</span> x <span class="keyword">-></span> ref</pre>
+        </div>
+
+        <div id="zig" class="card">
+            <h2>Zig Integration</h2>
+            <p>Zinc is designed to interoperate seamlessly with Zig.</p>
+            <h3>Escape Hatch</h3>
+            <p>Use <code>zig { ... }</code> to embed raw Zig code directly into your Zinc source.</p>
+            <pre><span class="keyword">zig</span> {
+    @import("std").debug.print("Hello from Zig!\n", .{});
+}</pre>
+            <h3>Builtins & Keywords</h3>
+            <p>Zig builtins (like <code>@sizeOf</code>) can be used directly. To use a Zig keyword that might conflict with Zinc or to ensure it's passed through, use the <code>@@</code> prefix: <code>@@addrspace</code>.</p>
+        </div>
+
+        <div id="safety" class="card">
+            <h2>Safety & Errors</h2>
+            <p>FZC performs static analysis to ensure memory safety:</p>
+            <ul>
+                <li><strong>Leak Detection:</strong> Warns if a <code>safe</code> variable is not freed or moved.</li>
+                <li><strong>Safe Runtime:</strong> <code>free()</code> is idempotent (safe to call multiple times) and poisons the pointer by setting it to <code>null</code>.</li>
+                <li><strong>No Escaping:</strong> <code>local</code> and <code>def</code> variables are restricted to their respective scopes.</li>
+            </ul>
+        </div>
+
+        <div id="modules" class="card">
+            <h2>The Module System</h2>
+            <p>Zinc modules are files ending in <code>.zn</code>. You can import other modules using the <code>import</code> keyword.</p>
+            <pre><span class="keyword">import</span> math
+<span class="keyword">import</span> graphics <span class="keyword">as</span> gfx
+
+<span class="keyword">fn</span> main() {
+    <span class="keyword">const</span> result = math.add(1, 2)
+    gfx.clear()
+}</pre>
+            <p>FZC automatically tracks all imports and transpiles them in a single run, ensuring that your entire project is kept in sync.</p>
+        </div>
+
+        <div id="fzc" class="card">
+            <h2>Using the Compiler (FZC)</h2>
+            <p>The FZC transpiler is designed to be lightweight and fast. It operates directly on the source text, performing necessary transformations to emit valid Zig code.</p>
+            <h3>Command Line Usage</h3>
+            <pre>python3 fzc.py <span class="string">&lt;entry_point.zn&gt;</span></pre>
+            <p>FZC will:</p>
+            <ol>
+                <li>Parse the entry file.</li>
+                <li>Identify all <code>import</code> statements.</li>
+                <li>Recurse into imported files.</li>
+                <li>Apply memory strategy transformations.</li>
+                <li>Emit <code>.zig</code> files in the same relative locations.</li>
+            </ol>
+        </div>
+
+        <footer>
+            <p>Fundamental Zinc Documentation &copy; 2025</p>
+        </footer>
+    </main>
+</body>
+</html>
