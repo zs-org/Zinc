@@ -1,0 +1,5 @@
+fn test_def() {
+    {
+        def x: i32 = 100
+    }
+}

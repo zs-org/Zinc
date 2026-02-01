@@ -1,0 +1,4 @@
+import other as o
+fn main() {
+    o.foo()
+}

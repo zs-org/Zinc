@@ -1,0 +1,5 @@
+fn test_move() {
+    safe x: i32 = 10
+    move x -> y
+    free(y)
+}

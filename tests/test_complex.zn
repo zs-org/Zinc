@@ -1,0 +1,18 @@
+fn complex_test() {
+    local a: i32 = 1
+    {
+        def b: i32 = 2
+        {
+            def c: i32 = 3
+            safe d: i32 = 4
+            move d -> e
+            free(e)
+        }
+    }
+    fixblock(512) {
+        fix f: i32 = 6
+        fixblock(256) {
+            fix g: i32 = 7
+        }
+    }
+}

@@ -1,0 +1,4 @@
+fn move_leak_test() {
+    safe x: i32 = 42
+    move x -> y
+}

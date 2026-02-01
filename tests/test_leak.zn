@@ -1,0 +1,3 @@
+fn leak_test() {
+    safe x: i32 = 42
+}

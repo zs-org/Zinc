@@ -1,0 +1,5 @@
+fn test_fix() {
+    fixblock(1024) {
+        fix x: i32 = 42
+    }
+}

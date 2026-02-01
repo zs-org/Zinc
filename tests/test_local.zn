@@ -1,0 +1,4 @@
+fn test_local() {
+    local a: i32 = 5
+    local b: i32 = 10
+}
