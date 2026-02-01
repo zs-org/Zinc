@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zinc Documentation - Zig Interop</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav>
+        <h2><a href="../index.html">Fundamental Zinc</a></h2>
+        <ul>
+            <li><a href="local.html">local</a></li>
+            <li><a href="def.html">def</a></li>
+            <li><a href="safe.html">safe</a></li>
+            <li><a href="fix.html">fix</a></li>
+            <li><a href="raw.html">raw</a></li>
+            <li><a href="ownership.html">Ownership</a></li>
+            <li><a href="imports.html">Imports</a></li>
+            <li><a href="zig.html">Zig Interop</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="card">
+            <h1>Zig Integration</h1>
+            <p>Zinc is built to be 100% compatible with Zig. It provides two primary mechanisms for direct Zig integration.</p>
+
+            <h2>1. Zig Escape Hatch</h2>
+            <p>The <code>zig { ... }</code> block allows you to embed raw Zig code directly into your Zinc source. FZC will copy the contents of the block verbatim into the output Zig file.</p>
+            <pre><span class="keyword">zig</span> {
+    <span class="keyword">const</span> std = @import(<span class="string">"std"</span>);
+    std.debug.print(<span class="string">"Hello from raw Zig!\n"</span>, .{});
+}</pre>
+
+            <h2>2. Keyword Forwarding</h2>
+            <p>To use a Zig keyword that might conflict with Zinc or to ensure a keyword is passed through unchanged, use the <code>@@</code> prefix.</p>
+            <pre><span class="keyword">const</span> x: i32 <span class="keyword">@@addrspace</span>(.generic) = 10;</pre>
+            <p>FZC will remove the <code>@@</code> prefix and pass <code>addrspace</code> through to the output.</p>
+
+            <h2>Standard Library</h2>
+            <p>All Zig builtin functions are supported unchanged in Zinc code:</p>
+            <ul>
+                <li><code>@import</code></li>
+                <li><code>@sizeOf</code></li>
+                <li><code>@ptrCast</code></li>
+                <li><code>@panic</code></li>
+                <li>...and all others.</li>
+            </ul>
+        </div>
+    </main>
+</body>
+</html>

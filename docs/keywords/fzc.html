@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zinc Documentation - FZC</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav>
+        <h2><a href="../index.html">Fundamental Zinc</a></h2>
+        <ul>
+            <li><a href="local.html">local</a></li>
+            <li><a href="def.html">def</a></li>
+            <li><a href="safe.html">safe</a></li>
+            <li><a href="fix.html">fix</a></li>
+            <li><a href="raw.html">raw</a></li>
+            <li><a href="ownership.html">Ownership</a></li>
+            <li><a href="imports.html">Imports</a></li>
+            <li><a href="zig.html">Zig Interop</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="card">
+            <h1>The Fundamental Zinc Compiler (FZC)</h1>
+            <p>FZC is a lightweight transpiler that converts Fundamental Zinc (<code>.zn</code>) files into standard Zig (<code>.zig</code>) files.</p>
+
+            <h2>Usage</h2>
+            <pre>python3 fzc.py &lt;entry_point.zn&gt;</pre>
+
+            <h2>Core Features</h2>
+            <ul>
+                <li><strong>Recursive Transpilation:</strong> Automatically finds and transpiles all imported modules.</li>
+                <li><strong>Directory Preservation:</strong> Maintains the exact subdirectory structure of your source files.</li>
+                <li><strong>Leak Detection:</strong> Performs static analysis to ensure <code>safe</code> variables are always freed or moved.</li>
+                <li><strong>Error Union Insertion:</strong> Automatically updates function signatures to return error unions (<code>!void</code> or <code>!T</code>) if they use memory strategies that can fail.</li>
+            </ul>
+
+            <h2>Runtime Support</h2>
+            <p>Every transpiled file automatically includes a reference to <code>zincstd.zig</code>, which provides the memory management primitives <code>_zinc_alloc</code> and <code>_zinc_dealloc</code>.</p>
+        </div>
+    </main>
+</body>
+</html>

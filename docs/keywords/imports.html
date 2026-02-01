@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zinc Documentation - Imports</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav>
+        <h2><a href="../index.html">Fundamental Zinc</a></h2>
+        <ul>
+            <li><a href="local.html">local</a></li>
+            <li><a href="def.html">def</a></li>
+            <li><a href="safe.html">safe</a></li>
+            <li><a href="fix.html">fix</a></li>
+            <li><a href="raw.html">raw</a></li>
+            <li><a href="ownership.html">Ownership</a></li>
+            <li><a href="imports.html">Imports</a></li>
+            <li><a href="zig.html">Zig Interop</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="card">
+            <h1>Module System: <code>import</code></h1>
+            <p>Fundamental Zinc features a clean module system that maps directly to Zig's file-based imports while adding project-wide transpilation support.</p>
+
+            <h2>Semantics</h2>
+            <ul>
+                <li>Only Zinc modules (<code>.zn</code> files) can be imported using the <code>import</code> keyword.</li>
+                <li>Imports are resolved relative to the current file.</li>
+                <li>The transpiler (FZC) automatically crawls all imports and transpiles the entire dependency tree.</li>
+                <li>Optional aliasing is supported with <code>as</code>.</li>
+            </ul>
+
+            <h2>Forms</h2>
+            <pre><span class="keyword">import</span> math
+<span class="keyword">import</span> graphics <span class="keyword">as</span> gfx
+<span class="keyword">import</span> utils/logger</pre>
+
+            <h2>Transpiled Zig</h2>
+            <pre><span class="keyword">const</span> math = @import(<span class="string">"math.zig"</span>);
+<span class="keyword">const</span> gfx = @import(<span class="string">"graphics.zig"</span>);
+<span class="keyword">const</span> logger = @import(<span class="string">"utils/logger.zig"</span>);</pre>
+
+            <h2>Project Structure</h2>
+            <p>FZC preserves your directory structure. If you have a file at <code>src/main.zn</code> that imports <code>src/lib/helper.zn</code>, FZC will generate <code>src/main.zig</code> and <code>src/lib/helper.zig</code>.</p>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zinc Documentation - local</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav>
+        <h2><a href="../index.html">Fundamental Zinc</a></h2>
+        <ul>
+            <li><a href="local.html">local</a></li>
+            <li><a href="def.html">def</a></li>
+            <li><a href="safe.html">safe</a></li>
+            <li><a href="fix.html">fix</a></li>
+            <li><a href="raw.html">raw</a></li>
+            <li><a href="ownership.html">Ownership</a></li>
+            <li><a href="imports.html">Imports</a></li>
+            <li><a href="zig.html">Zig Interop</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="card">
+            <h1>Keyword: <code>local</code></h1>
+            <p>The <code>local</code> keyword provides function-scoped arena allocation. It is the primary performance allocator in Fundamental Zinc.</p>
+
+            <h2>Semantics</h2>
+            <ul>
+                <li>A function may have zero or more <code>local</code> variables.</li>
+                <li>On the first occurrence of <code>local</code> in a function, an <code>ArenaAllocator</code> is created.</li>
+                <li>All <code>local</code> allocations in that function use the same arena.</li>
+                <li>The arena is freed exactly once, at function exit.</li>
+                <li>Individual <code>local</code> variables are never freed manually.</li>
+            </ul>
+
+            <h2>Example</h2>
+            <pre><span class="keyword">fn</span> process_data() {
+    <span class="keyword">local</span> list: []i32 = init_list()
+    <span class="keyword">local</span> buffer: [1024]u8 = undefined
+
+    <span class="comment">// Use list and buffer...</span>
+    <span class="comment">// Both are freed when process_data returns.</span>
+}</pre>
+
+            <h2>Transpiled Zig</h2>
+            <pre><span class="keyword">fn</span> process_data() !void {
+    <span class="keyword">var</span> __local_allocator_1 = std.heap.ArenaAllocator.init(zinc_allocator);
+    <span class="keyword">defer</span> __local_allocator_1.deinit();
+
+    <span class="keyword">const</span> list = <span class="keyword">try</span> __local_allocator_1.allocator().create([]i32);
+    <span class="comment">// ...</span>
+}</pre>
+        </div>
+    </main>
+</body>
+</html>

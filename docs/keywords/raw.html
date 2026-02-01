@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zinc Documentation - raw</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav>
+        <h2><a href="../index.html">Fundamental Zinc</a></h2>
+        <ul>
+            <li><a href="local.html">local</a></li>
+            <li><a href="def.html">def</a></li>
+            <li><a href="safe.html">safe</a></li>
+            <li><a href="fix.html">fix</a></li>
+            <li><a href="raw.html">raw</a></li>
+            <li><a href="ownership.html">Ownership</a></li>
+            <li><a href="imports.html">Imports</a></li>
+            <li><a href="zig.html">Zig Interop</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="card">
+            <h1>Keyword: <code>raw</code></h1>
+            <p>The <code>raw</code> keyword provides fully unsafe heap allocation. It bypasses Zinc's safety checks and is intended for expert usage, FFI, or low-level allocator implementation.</p>
+
+            <h2>Semantics</h2>
+            <ul>
+                <li>Directly allocated via <code>zinc_allocator</code>.</li>
+                <li>No automatic cleanup.</li>
+                <li>No leak detection or escape analysis.</li>
+                <li>The developer is responsible for all lifetime management.</li>
+            </ul>
+
+            <h2>Example</h2>
+            <pre><span class="keyword">raw</span> ptr: *u8 = c.malloc(10)
+<span class="comment">// No safety checks performed on 'ptr'</span></pre>
+
+            <h2>Transpiled Zig</h2>
+            <pre><span class="keyword">var</span> ptr: ?*u8 = <span class="keyword">try</span> zinc_allocator.create(u8);
+<span class="comment">// ...</span></pre>
+        </div>
+    </main>
+</body>
+</html>

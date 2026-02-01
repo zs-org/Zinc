@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zinc Documentation - Ownership</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav>
+        <h2><a href="../index.html">Fundamental Zinc</a></h2>
+        <ul>
+            <li><a href="local.html">local</a></li>
+            <li><a href="def.html">def</a></li>
+            <li><a href="safe.html">safe</a></li>
+            <li><a href="fix.html">fix</a></li>
+            <li><a href="raw.html">raw</a></li>
+            <li><a href="ownership.html">Ownership</a></li>
+            <li><a href="imports.html">Imports</a></li>
+            <li><a href="zig.html">Zig Interop</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="card">
+            <h1>Ownership: <code>move</code> and <code>borrow</code></h1>
+            <p>Fundamental Zinc uses explicit ownership transfer and borrowing to manage heap lifetimes safely.</p>
+
+            <h2>Move Semantics</h2>
+            <p>The <code>move</code> keyword transfers ownership from one variable to another. The source variable is invalidated (set to <code>null</code>).</p>
+            <pre><span class="keyword">move</span> x <span class="keyword">-></span> y</pre>
+            <p><strong>Zig Equivalent:</strong> <code>var y = x; x = null;</code></p>
+
+            <h2>Borrowing</h2>
+            <p>The <code>borrow</code> keyword creates a reference without transferring ownership. The borrower has no responsibility for freeing the memory.</p>
+            <pre><span class="keyword">borrow</span> x <span class="keyword">-></span> ref</pre>
+            <p><strong>Zig Equivalent:</strong> <code>const ref = x;</code></p>
+
+            <h2>Ownership Rules</h2>
+            <ul>
+                <li>Standard assignment (<code>x = y</code>) is not allowed for heap-managed variables.</li>
+                <li>Exactly one variable owns a heap allocation at any time.</li>
+                <li>Only the owner can call <code>free()</code> or let the allocation be automatically cleaned up (for <code>def</code>).</li>
+            </ul>
+
+            <h2>Example</h2>
+            <pre><span class="keyword">safe</span> a: Data = load()
+<span class="keyword">move</span> a <span class="keyword">-></span> b
+<span class="comment">// 'a' is now null, 'b' owns the Data</span>
+<span class="keyword">borrow</span> b <span class="keyword">-></span> c
+<span class="comment">// 'c' can access the Data, but 'b' is still the owner</span>
+<span class="keyword">free</span>(b)</pre>
+        </div>
+    </main>
+</body>
+</html>
