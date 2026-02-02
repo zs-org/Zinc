@@ -35,6 +35,7 @@
             <pre><span class="keyword">import</span> std
 
 <span class="keyword">pub fn</span> main() {
+    <span class="keyword">defer</span> zinc_deinit();
     <span class="keyword">local</span> message: []u8 = "Hello, Zinc!".dup()
     <span class="keyword">zig</span> {
         @import("std").debug.print("{s}\n", .{message});

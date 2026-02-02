@@ -38,6 +38,13 @@
 
             <h2>Runtime Support</h2>
             <p>Every transpiled file automatically includes a reference to <code>zincstd.zig</code>, which provides the memory management primitives <code>_zinc_alloc</code> and <code>_zinc_dealloc</code>.</p>
+
+            <h3>Cleanup Hook</h3>
+            <p>If you are using the default GeneralPurposeAllocator, you should call <code>zinc_deinit()</code> at the end of your program (usually in <code>main</code>) to finalize the allocator and run leak detection.</p>
+            <pre><span class="keyword">pub fn</span> main() {
+    <span class="keyword">defer</span> zinc_deinit();
+    <span class="comment">// ... your code ...</span>
+}</pre>
         </div>
     </main>
 </body>

@@ -197,7 +197,12 @@ class FZC:
             self.current_local_arena = None
 
         tracked_safe_vars = set()
-        transformed_body = self.transform_block(body_tokens, tracked_safe_vars)
+        local_vars = set()
+        if uses_local:
+            # We will populate this as we parse the body
+            pass
+
+        transformed_body = self.transform_block(body_tokens, tracked_safe_vars, local_vars=local_vars, def_vars=set(), zn_path=zn_path)
 
         # Report leaks
         func_name_tokens = []
@@ -216,15 +221,29 @@ class FZC:
         self.current_local_arena = old_local_arena
         return sig_res + transformed_body
 
-    def transform_block(self, tokens, tracked_safe_vars):
+    def transform_block(self, tokens, tracked_safe_vars, local_vars, def_vars, zn_path):
         res = []
         i = 0
         while i < len(tokens):
             kind, value = tokens[i]
 
+            if kind == 'LBRACE':
+                if i == 0:
+                    res.append(value)
+                    i += 1
+                    continue
+                else:
+                    body_tokens, next_i = self.get_block(tokens, i)
+                    inner_def_vars = set(def_vars)
+                    transformed_inner_body = self.transform_block(body_tokens, tracked_safe_vars, local_vars, inner_def_vars, zn_path)
+                    res.append(transformed_inner_body)
+                    i = next_i
+                    continue
+
             if kind == 'ID' and value == 'local':
                 decl, next_i = self.parse_decl(tokens, i)
                 res.append(f"const {decl['name']} = try {self.current_local_arena}.allocator().create({decl['type']}); {decl['name']}.* = {decl['expr']};")
+                local_vars.add(decl['name'])
                 i = next_i
                 continue
 
@@ -237,6 +256,7 @@ class FZC:
                     i += 1
                 decl, next_i = self.parse_decl(tokens, i, skip_keyword=True)
                 res.append(f"var {decl['name']}: ?*{decl['type']} = try _zinc_alloc({decl['type']}); defer _zinc_dealloc(&{decl['name']}); {decl['name']}.* = {decl['expr']};")
+                def_vars.add(decl['name'])
                 i = next_i
                 continue
 
@@ -276,7 +296,10 @@ class FZC:
                 body_tokens, next_i = self.get_block(tokens, i)
                 fba_name, buf_name = self.get_next_fix_alloc_name()
                 self.fix_alloc_stack.append(fba_name)
-                transformed_inner_body = self.transform_block(body_tokens, tracked_safe_vars)
+                # def_vars are block-scoped, so we create a new set for the inner block but it can see outer def_vars too?
+                # Actually, Zinc design says def is block-scoped lifetime.
+                inner_def_vars = set(def_vars)
+                transformed_inner_body = self.transform_block(body_tokens, tracked_safe_vars, local_vars, inner_def_vars, zn_path)
                 fixblock_res = f"{{\n    var {buf_name}: [{limit}]u8 = undefined;\n    var {fba_name} = std.heap.FixedBufferAllocator.init(&{buf_name});\n"
                 fixblock_res += transformed_inner_body[1:]
                 res.append(fixblock_res)
@@ -342,6 +365,16 @@ class FZC:
                 res.append(verbatim)
                 i = next_i
                 continue
+
+            if kind == 'ID' and value == 'return':
+                j = i + 1
+                while j < len(tokens) and tokens[j][0] == 'WHITESPACE': j += 1
+                if j < len(tokens) and tokens[j][0] == 'ID':
+                    ret_var = tokens[j][1]
+                    if ret_var in local_vars:
+                        print(f"Error in {zn_path}: Cannot return local variable '{ret_var}'")
+                    if ret_var in def_vars:
+                        print(f"Error in {zn_path}: Cannot return def variable '{ret_var}'")
 
             if kind == 'ZIG_ESC':
                 res.append(value[2:])

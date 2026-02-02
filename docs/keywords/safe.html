@@ -30,7 +30,8 @@
                 <li>Allocated via the standard Zinc allocator.</li>
                 <li>Must be freed manually using <code>free(x)</code>.</li>
                 <li>FZC enforces that every <code>safe</code> variable is either freed or moved.</li>
-                <li>The runtime protects against double-frees by poisoning pointers.</li>
+                <li><strong>Idempotent Free:</strong> The runtime protects against double-frees and null-pointer frees. Calling <code>free()</code> multiple times on the same variable is safe and has no effect after the first call.</li>
+                <li>The runtime poisons the pointer by setting it to <code>null</code> after deallocation.</li>
             </ul>
 
             <h2>Example</h2>

@@ -1,0 +1,16 @@
+fn test_local_escape() {
+    local x: i32 = 10
+    return x
+}
+
+fn test_def_escape() {
+    {
+        def y: i32 = 20
+        return y
+    }
+}
+
+fn test_ok_return() {
+    const z: i32 = 30
+    return z
+}

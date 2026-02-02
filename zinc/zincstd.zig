@@ -15,3 +15,7 @@ pub fn _zinc_dealloc(ptr_to_opt_ptr: anytype) void {
         ptr_to_opt_ptr.* = null;
     }
 }
+
+pub fn zinc_deinit() void {
+    _ = gpa.deinit();
+}
