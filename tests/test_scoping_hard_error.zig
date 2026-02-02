@@ -9,7 +9,7 @@ fn test_local_escape()  !void{
 
 fn test_def_escape()  !void{
     {
-        var y: ?*i32 = try _zinc_alloc(i32); defer _zinc_dealloc(&y); y.* = 20;
+        var y: ?*i32 = null; defer _zinc_dealloc(&y); y = try _zinc_alloc(i32); y.* = 20;
         return y
     }
 }

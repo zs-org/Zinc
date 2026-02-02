@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zinc Documentation - Functions</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav>
+        <h2><a href="../index.html">Fundamental Zinc</a></h2>
+                <ul>
+            <li><a href="local.html">local</a></li>
+            <li><a href="def.html">def</a></li>
+            <li><a href="safe.html">safe</a></li>
+            <li><a href="fix.html">fix</a></li>
+            <li><a href="raw.html">raw</a></li>
+            <li><a href="ownership.html">Ownership</a></li>
+            <li><a href="imports.html">Imports</a></li>
+            <li><a href="zig.html">Zig Interop</a></li>
+            <li><a href="visibility_ffi.html">Visibility & FFI</a></li>
+            <li><a href="control_flow.html">Control Flow</a></li>
+            <li><a href="structs_types.html">Structs & Types</a></li>
+            <li><a href="functions.html">Functions</a></li>
+            <li><a href="fzc.html">Using FZC</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="card">
+            <h1>Functions</h1>
+            <p>Functions in Zinc are explicit about their parameters and return types.</p>
+
+            <h2>Void Functions</h2>
+            <p>Functions that don't return a value can either omit the return type or explicitly specify <code>void</code>.</p>
+            <pre><span class="keyword">fn</span> say_hello() {
+    <span class="comment">// ...</span>
+}
+
+<span class="keyword">fn</span> log_error(msg: []<span class="keyword">const</span> u8) <span class="keyword">void</span> {
+    <span class="comment">// ...</span>
+}</pre>
+
+            <h2>Returnable Functions</h2>
+            <p>Specify the return type after the parameter list.</p>
+            <pre><span class="keyword">fn</span> add(a: i32, b: i32) i32 {
+    <span class="keyword">return</span> a + b;
+}</pre>
+
+            <h2>Error Unions and <code>!</code></h2>
+            <p>If a function uses memory strategies that can fail (like <code>def</code>, <code>local</code>, <code>safe</code>, <code>raw</code>), FZC automatically wraps the return type in an error union (e.g., <code>!void</code> or <code>!i32</code>). This allows you to use the <code>try</code> keyword for error propagation.</p>
+            <pre><span class="keyword">fn</span> create_data() !Data {
+    <span class="keyword">def</span> d: Data = Data.init()
+    <span class="keyword">return</span> d.*; <span class="comment">// Value is copied out, 'd' is freed</span>
+}</pre>
+
+            <h2>Function Modifiers</h2>
+            <p>You can use <code>pub</code>, <code>export</code>, and <code>extern</code> modifiers as described in the <a href="visibility_ffi.html">Visibility & FFI</a> section.</p>
+        </div>
+    </main>
+</body>
+</html>

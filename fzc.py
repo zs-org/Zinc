@@ -221,11 +221,48 @@ class FZC:
         self.current_local_arena = old_local_arena
         return sig_res + transformed_body
 
+    def transform_struct_literal(self, tokens, tracked_safe_vars, local_vars, def_vars, moved_vars, zn_path):
+        res = []
+        i = 0
+        while i < len(tokens):
+            kind, value = tokens[i]
+            if kind == 'LBRACE':
+                if i == 0:
+                    res.append(value)
+                    i += 1
+                    continue
+                else:
+                    body_tokens, next_i = self.get_block(tokens, i)
+                    res.append(self.transform_struct_literal(body_tokens, tracked_safe_vars, local_vars, def_vars, moved_vars, zn_path))
+                    i = next_i
+                    continue
+            if kind == 'ID':
+                j = i + 1
+                while j < len(tokens) and tokens[j][0] == 'WHITESPACE': j += 1
+                if j < len(tokens) and tokens[j][0] == 'EQ':
+                    res.append("." + value)
+                    i = j
+                    res.append("=")
+                    i += 1
+                    continue
+            res.append(value)
+            i += 1
+        return "".join(res)
+
     def transform_block(self, tokens, tracked_safe_vars, local_vars, def_vars, moved_vars, zn_path):
         res = []
         i = 0
         while i < len(tokens):
             kind, value = tokens[i]
+
+            if kind == 'ID' and i + 1 < len(tokens) and tokens[i+1][0] == 'LBRACE':
+                if value not in ('if', 'while', 'for', 'switch', 'catch', 'fn', 'test', 'comptime', 'defer', 'errdefer', 'fixblock', 'zig', 'struct', 'enum', 'union'):
+                    res.append(value)
+                    i += 1
+                    body_tokens, next_i = self.get_block(tokens, i)
+                    res.append(self.transform_struct_literal(body_tokens, tracked_safe_vars, local_vars, def_vars, moved_vars, zn_path))
+                    i = next_i
+                    continue
 
             if kind == 'LBRACE':
                 if i == 0:
@@ -243,7 +280,9 @@ class FZC:
 
             if kind == 'ID' and value == 'local':
                 decl, next_i = self.parse_decl(tokens, i)
-                res.append(f"const {decl['name']} = try {self.current_local_arena}.allocator().create({decl['type']}); {decl['name']}.* = {decl['expr']};")
+                expr_tokens = self.tokenize(decl['expr'])
+                transformed_expr = self.transform_struct_literal(expr_tokens, tracked_safe_vars, local_vars, def_vars, moved_vars, zn_path)
+                res.append(f"const {decl['name']} = try {self.current_local_arena}.allocator().create({decl['type']}); {decl['name']}.* = {transformed_expr};")
                 local_vars.add(decl['name'])
                 i = next_i
                 continue
@@ -252,11 +291,13 @@ class FZC:
                 mut = False
                 i += 1
                 while i < len(tokens) and tokens[i][0] == 'WHITESPACE': i += 1
-                if tokens[i][1] == 'mut':
+                if i < len(tokens) and tokens[i][1] == 'mut':
                     mut = True
                     i += 1
                 decl, next_i = self.parse_decl(tokens, i, skip_keyword=True)
-                res.append(f"var {decl['name']}: ?*{decl['type']} = try _zinc_alloc({decl['type']}); defer _zinc_dealloc(&{decl['name']}); {decl['name']}.* = {decl['expr']};")
+                expr_tokens = self.tokenize(decl['expr'])
+                transformed_expr = self.transform_struct_literal(expr_tokens, tracked_safe_vars, local_vars, def_vars, moved_vars, zn_path)
+                res.append(f"var {decl['name']}: ?*{decl['type']} = null; defer _zinc_dealloc(&{decl['name']}); {decl['name']} = try _zinc_alloc({decl['type']}); {decl['name']}.* = {transformed_expr};")
                 def_vars.add(decl['name'])
                 i = next_i
                 continue
@@ -264,10 +305,12 @@ class FZC:
             if kind == 'ID' and value == 'safe':
                 i += 1
                 while i < len(tokens) and tokens[i][0] == 'WHITESPACE': i += 1
-                if tokens[i][1] == 'mut':
+                if i < len(tokens) and tokens[i][1] == 'mut':
                     i += 1
                 decl, next_i = self.parse_decl(tokens, i, skip_keyword=True)
-                res.append(f"var {decl['name']}: ?*{decl['type']} = try _zinc_alloc({decl['type']}); {decl['name']}.* = {decl['expr']};")
+                expr_tokens = self.tokenize(decl['expr'])
+                transformed_expr = self.transform_struct_literal(expr_tokens, tracked_safe_vars, local_vars, def_vars, moved_vars, zn_path)
+                res.append(f"var {decl['name']}: ?*{decl['type']} = null; {decl['name']} = try _zinc_alloc({decl['type']}); {decl['name']}.* = {transformed_expr};")
                 tracked_safe_vars.add(decl['name'])
                 i = next_i
                 continue
@@ -275,10 +318,12 @@ class FZC:
             if kind == 'ID' and value == 'raw':
                 i += 1
                 while i < len(tokens) and tokens[i][0] == 'WHITESPACE': i += 1
-                if tokens[i][1] == 'mut':
+                if i < len(tokens) and tokens[i][1] == 'mut':
                     i += 1
                 decl, next_i = self.parse_decl(tokens, i, skip_keyword=True)
-                res.append(f"var {decl['name']}: ?*{decl['type']} = try _zinc_alloc({decl['type']}); {decl['name']}.* = {decl['expr']};")
+                expr_tokens = self.tokenize(decl['expr'])
+                transformed_expr = self.transform_struct_literal(expr_tokens, tracked_safe_vars, local_vars, def_vars, moved_vars, zn_path)
+                res.append(f"var {decl['name']}: ?*{decl['type']} = null; {decl['name']} = try _zinc_alloc({decl['type']}); {decl['name']}.* = {transformed_expr};")
                 i = next_i
                 continue
 

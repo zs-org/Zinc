@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zinc Documentation - Visibility & FFI</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav>
+        <h2><a href="../index.html">Fundamental Zinc</a></h2>
+                <ul>
+            <li><a href="local.html">local</a></li>
+            <li><a href="def.html">def</a></li>
+            <li><a href="safe.html">safe</a></li>
+            <li><a href="fix.html">fix</a></li>
+            <li><a href="raw.html">raw</a></li>
+            <li><a href="ownership.html">Ownership</a></li>
+            <li><a href="imports.html">Imports</a></li>
+            <li><a href="zig.html">Zig Interop</a></li>
+            <li><a href="visibility_ffi.html">Visibility & FFI</a></li>
+            <li><a href="control_flow.html">Control Flow</a></li>
+            <li><a href="structs_types.html">Structs & Types</a></li>
+            <li><a href="functions.html">Functions</a></li>
+            <li><a href="fzc.html">Using FZC</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="card">
+            <h1>Visibility & FFI: <code>pub</code>, <code>export</code>, <code>extern</code></h1>
+            <p>Zinc provides keywords for managing visibility and interfacing with external code, mapping directly to Zig's semantics.</p>
+
+            <h2><code>pub</code></h2>
+            <p>Makes a declaration visible to other modules that import this file.</p>
+            <pre><span class="keyword">pub const</span> PI = 3.14159;
+<span class="keyword">pub fn</span> add(a: i32, b: i32) i32 { <span class="keyword">return</span> a + b; }</pre>
+
+            <h2><code>export</code></h2>
+            <p>Makes a declaration available to the linker, using the C calling convention by default. Useful for creating libraries that other languages can use.</p>
+            <pre><span class="keyword">export fn</span> my_c_api() <span class="keyword">void</span> {
+    <span class="comment">// ...</span>
+}</pre>
+
+            <h2><code>extern</code></h2>
+            <p>Used to declare symbols that are defined in an external object file or library.</p>
+            <pre><span class="keyword">extern fn</span> printf(format: [*:0]<span class="keyword">const</span> u8, ...) i32;</pre>
+
+            <h2>Semantic Mapping</h2>
+            <p>These keywords are passed through to Zig unchanged. They do not affect Zinc's memory model but are essential for structuring programs and FFI.</p>
+        </div>
+    </main>
+</body>
+</html>

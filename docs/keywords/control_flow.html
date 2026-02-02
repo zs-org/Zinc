@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zinc Documentation - Control Flow</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav>
+        <h2><a href="../index.html">Fundamental Zinc</a></h2>
+                <ul>
+            <li><a href="local.html">local</a></li>
+            <li><a href="def.html">def</a></li>
+            <li><a href="safe.html">safe</a></li>
+            <li><a href="fix.html">fix</a></li>
+            <li><a href="raw.html">raw</a></li>
+            <li><a href="ownership.html">Ownership</a></li>
+            <li><a href="imports.html">Imports</a></li>
+            <li><a href="zig.html">Zig Interop</a></li>
+            <li><a href="visibility_ffi.html">Visibility & FFI</a></li>
+            <li><a href="control_flow.html">Control Flow</a></li>
+            <li><a href="structs_types.html">Structs & Types</a></li>
+            <li><a href="functions.html">Functions</a></li>
+            <li><a href="fzc.html">Using FZC</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="card">
+            <h1>Control Flow: <code>if</code>, <code>while</code>, <code>for</code></h1>
+            <p>Zinc supports standard control flow constructs, which are passed through to Zig.</p>
+
+            <h2><code>if</code> and <code>else</code></h2>
+            <pre><span class="keyword">if</span> (condition) {
+    <span class="comment">// ...</span>
+} <span class="keyword">else if</span> (other_condition) {
+    <span class="comment">// ...</span>
+} <span class="keyword">else</span> {
+    <span class="comment">// ...</span>
+}</pre>
+
+            <h2><code>while</code> Loops</h2>
+            <pre><span class="keyword">var</span> i: i32 = 0;
+<span class="keyword">while</span> (i < 10) : (i += 1) {
+    <span class="comment">// ...</span>
+}</pre>
+
+            <h2><code>for</code> Loops</h2>
+            <p>Used for iterating over arrays, slices, or ranges.</p>
+            <pre><span class="keyword">const</span> items = [_]i32{ 1, 2, 3 };
+<span class="keyword">for</span> (items) |item| {
+    <span class="comment">// use item</span>
+}</pre>
+
+            <h2>Memory in Control Flow</h2>
+            <p>You can use <code>safe</code> memory and call <code>free()</code> inside loops or conditionals. The Zinc runtime ensures that deallocation is idempotent and safe even if called multiple times or on null pointers.</p>
+            <pre><span class="keyword">while</span> (running) {
+    <span class="keyword">safe</span> data = fetch()
+    <span class="keyword">if</span> (data.error) {
+        <span class="keyword">free</span>(data)
+        <span class="keyword">continue</span>
+    }
+    process(data)
+    <span class="keyword">free</span>(data)
+}</pre>
+        </div>
+    </main>
+</body>
+</html>

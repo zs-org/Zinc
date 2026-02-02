@@ -5,10 +5,10 @@ fn complex_test()  !void{
 
     const a = try __local_allocator_1.allocator().create(i32); a.* = 1;
     {
-        var b: ?*i32 = try _zinc_alloc(i32); defer _zinc_dealloc(&b); b.* = 2;
+        var b: ?*i32 = null; defer _zinc_dealloc(&b); b = try _zinc_alloc(i32); b.* = 2;
         {
-            var c: ?*i32 = try _zinc_alloc(i32); defer _zinc_dealloc(&c); c.* = 3;
-            var d: ?*i32 = try _zinc_alloc(i32); d.* = 4;
+            var c: ?*i32 = null; defer _zinc_dealloc(&c); c = try _zinc_alloc(i32); c.* = 3;
+            var d: ?*i32 = null; d = try _zinc_alloc(i32); d.* = 4;
             var e = d; d = null;
             _zinc_dealloc(&e);
         }
