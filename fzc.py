@@ -202,7 +202,7 @@ class FZC:
             # We will populate this as we parse the body
             pass
 
-        transformed_body = self.transform_block(body_tokens, tracked_safe_vars, local_vars=local_vars, def_vars=set(), zn_path=zn_path)
+        transformed_body = self.transform_block(body_tokens, tracked_safe_vars, local_vars=local_vars, def_vars=set(), moved_vars=set(), zn_path=zn_path)
 
         # Report leaks
         func_name_tokens = []
@@ -212,7 +212,7 @@ class FZC:
                 func_name_tokens.append(t[1])
         func_name = "".join(func_name_tokens).strip()
         for var in tracked_safe_vars:
-            print(f"Error in {zn_path}: Function '{func_name}' forgets to free safe variable '{var}'")
+            self.errors.append(f"Error in {zn_path}: Function '{func_name}' forgets to free safe variable '{var}'")
 
         if uses_local:
             arena_init = f"\n    var {self.current_local_arena} = std.heap.ArenaAllocator.init(zinc_allocator);\n    defer {self.current_local_arena}.deinit();\n"
@@ -221,7 +221,7 @@ class FZC:
         self.current_local_arena = old_local_arena
         return sig_res + transformed_body
 
-    def transform_block(self, tokens, tracked_safe_vars, local_vars, def_vars, zn_path):
+    def transform_block(self, tokens, tracked_safe_vars, local_vars, def_vars, moved_vars, zn_path):
         res = []
         i = 0
         while i < len(tokens):
@@ -235,7 +235,8 @@ class FZC:
                 else:
                     body_tokens, next_i = self.get_block(tokens, i)
                     inner_def_vars = set(def_vars)
-                    transformed_inner_body = self.transform_block(body_tokens, tracked_safe_vars, local_vars, inner_def_vars, zn_path)
+                    inner_moved_vars = set(moved_vars)
+                    transformed_inner_body = self.transform_block(body_tokens, tracked_safe_vars, local_vars, inner_def_vars, inner_moved_vars, zn_path)
                     res.append(transformed_inner_body)
                     i = next_i
                     continue
@@ -277,7 +278,7 @@ class FZC:
                 if tokens[i][1] == 'mut':
                     i += 1
                 decl, next_i = self.parse_decl(tokens, i, skip_keyword=True)
-                res.append(f"var {decl['name']}: ?*{decl['type']} = try zinc_allocator.create({decl['type']}); {decl['name']}.* = {decl['expr']};")
+                res.append(f"var {decl['name']}: ?*{decl['type']} = try _zinc_alloc({decl['type']}); {decl['name']}.* = {decl['expr']};")
                 i = next_i
                 continue
 
@@ -299,7 +300,7 @@ class FZC:
                 # def_vars are block-scoped, so we create a new set for the inner block but it can see outer def_vars too?
                 # Actually, Zinc design says def is block-scoped lifetime.
                 inner_def_vars = set(def_vars)
-                transformed_inner_body = self.transform_block(body_tokens, tracked_safe_vars, local_vars, inner_def_vars, zn_path)
+                transformed_inner_body = self.transform_block(body_tokens, tracked_safe_vars, local_vars, inner_def_vars, moved_vars, zn_path)
                 fixblock_res = f"{{\n    var {buf_name}: [{limit}]u8 = undefined;\n    var {fba_name} = std.heap.FixedBufferAllocator.init(&{buf_name});\n"
                 fixblock_res += transformed_inner_body[1:]
                 res.append(fixblock_res)
@@ -318,6 +319,8 @@ class FZC:
                 i += 1
                 while i < len(tokens) and tokens[i][0] == 'WHITESPACE': i += 1
                 src = tokens[i][1]
+                if src in moved_vars:
+                    self.errors.append(f"Error in {zn_path}: Usage of moved variable '{src}'")
                 i += 1
                 while i < len(tokens) and tokens[i][0] != 'MOVE': i += 1
                 i += 1 # skip ->
@@ -325,6 +328,7 @@ class FZC:
                 dst = tokens[i][1]
                 i += 1
                 res.append(f"var {dst} = {src}; {src} = null;")
+                moved_vars.add(src)
                 if src in tracked_safe_vars:
                     tracked_safe_vars.remove(src)
                     tracked_safe_vars.add(dst)
@@ -334,6 +338,8 @@ class FZC:
                 i += 1
                 while i < len(tokens) and tokens[i][0] == 'WHITESPACE': i += 1
                 src = tokens[i][1]
+                if src in moved_vars:
+                    self.errors.append(f"Error in {zn_path}: Usage of moved variable '{src}'")
                 i += 1
                 while i < len(tokens) and tokens[i][0] != 'MOVE': i += 1
                 i += 1 # skip ->
@@ -349,6 +355,8 @@ class FZC:
                 i += 1 # skip (
                 while i < len(tokens) and tokens[i][0] == 'WHITESPACE': i += 1
                 var_name = tokens[i][1]
+                if var_name in moved_vars:
+                    self.errors.append(f"Error in {zn_path}: Usage of moved variable '{var_name}'")
                 i += 1
                 while i < len(tokens) and tokens[i][0] != 'RPAREN': i += 1
                 i += 1 # skip )
@@ -372,9 +380,16 @@ class FZC:
                 if j < len(tokens) and tokens[j][0] == 'ID':
                     ret_var = tokens[j][1]
                     if ret_var in local_vars:
-                        print(f"Error in {zn_path}: Cannot return local variable '{ret_var}'")
+                        self.errors.append(f"Error in {zn_path}: Cannot return local variable '{ret_var}'")
                     if ret_var in def_vars:
-                        print(f"Error in {zn_path}: Cannot return def variable '{ret_var}'")
+                        self.errors.append(f"Error in {zn_path}: Cannot return def variable '{ret_var}'")
+                    if ret_var in moved_vars:
+                        self.errors.append(f"Error in {zn_path}: Usage of moved variable '{ret_var}'")
+
+            if kind == 'ID' and value in moved_vars:
+                # Basic check: if it's not a known keyword we are already handling
+                if value not in ('local', 'def', 'safe', 'raw', 'fix', 'move', 'borrow', 'free', 'zig', 'return'):
+                    self.errors.append(f"Error in {zn_path}: Usage of moved variable '{value}'")
 
             if kind == 'ZIG_ESC':
                 res.append(value[2:])
@@ -413,3 +428,8 @@ if __name__ == "__main__":
 
     fzc = FZC()
     fzc.transpile(sys.argv[1])
+
+    if fzc.errors:
+        for err in fzc.errors:
+            print(err)
+        sys.exit(1)

@@ -1,0 +1,11 @@
+fn test_local_escape() {
+    local x: i32 = 10
+    return x
+}
+
+fn test_def_escape() {
+    {
+        def y: i32 = 20
+        return y
+    }
+}

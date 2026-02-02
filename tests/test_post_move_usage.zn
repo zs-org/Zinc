@@ -1,0 +1,29 @@
+fn test_post_move() {
+    safe a: i32 = 10
+    move a -> b
+    zig {
+        @import("std").debug.print("a: {any}\n", .{a});
+    }
+    free(b)
+}
+
+fn test_move_again() {
+    safe c: i32 = 20
+    move c -> d
+    move c -> e
+    free(d)
+}
+
+fn test_borrow_after_move() {
+    safe f: i32 = 30
+    move f -> g
+    borrow f -> h
+    free(g)
+}
+
+fn test_free_after_move() {
+    safe i: i32 = 40
+    move i -> j
+    free(i)
+    free(j)
+}

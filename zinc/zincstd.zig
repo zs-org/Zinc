@@ -10,6 +10,8 @@ pub fn _zinc_alloc(comptime T: type) !*T {
 
 pub fn _zinc_dealloc(ptr_to_opt_ptr: anytype) void {
     // Expected type of ptr_to_opt_ptr is *?*T
+    // Idempotent: safe to call multiple times.
+    // Sets pointer to null after deallocation to prevent double-free.
     if (ptr_to_opt_ptr.*) |ptr| {
         zinc_allocator.destroy(ptr);
         ptr_to_opt_ptr.* = null;
